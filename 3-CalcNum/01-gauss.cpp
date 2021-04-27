@@ -24,6 +24,9 @@ int main()
   ler_matriz(m, n, n + 1);
   mostrar_matriz(m, n, n + 1);
 
+  metodo_gauss(m, n);
+  mostrar_matriz(m, n, n+1);
+
   int tipo = sub_retro(m, n, x);
   if (tipo == 2)
   {

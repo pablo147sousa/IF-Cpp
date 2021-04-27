@@ -14,15 +14,14 @@
 
 #include <math.h>
 
-
 /**
  *    Algoritmo de substituição retroativa.
  * 
- * \param m matriz aumentada de coeficientes;
- * \param n número de linhas da matriz;
- * \param x vetor de n posições para armazenar o resultado;
+ * @param m matriz aumentada de coeficientes;
+ * @param n número de linhas da matriz;
+ * @param x vetor de n posições para armazenar o resultado;
  * 
- * \return o tipo de resposta:
+ * @return o tipo de resposta:
  *  -1 se o SL não for TS;
  *  0 se o SL TS for determinado;
  *  1 se o SL TS for indeterminado;
@@ -62,4 +61,55 @@ int sub_retro(double **m, unsigned n, double *x)
     }
   }
   return tipo;
+}
+
+/**
+ *    Transforma a matriz aumentada em um SL TS equivalente
+ * @param m a matriz aumentada a ser modificada pelo método;
+ * @param n o número de linhas da matriz.
+ * 
+*/
+void metodo_gauss(double **m, unsigned n)
+{
+  int i, j, k;
+  double *aux, mult;
+
+  for (i = 0; i < n - 1; i++)
+  {
+    // Se o pivô da linha for 0
+    if (m[i][i] == 0)
+    {
+      j = i + 1;
+
+      // busca a próxima linha sem pivô nulo
+      while (j < n && m[j][i] == 0)
+      {
+        j++;
+      }
+
+      // Se houver linha j com pivô não nulo
+      // Troca as linhas i e j.
+      if (j < n)
+      {
+        aux = m[i];
+        m[i] = m[j];
+        m[j] = aux;
+      }
+    }
+
+    // Realiza a pivotação
+    if (m[i][i] != 0)
+    {
+      for (j = i + 1; j < n; j++)
+      {
+        mult = -m[j][i] / m[i][i];
+        m[j][i] = 0;
+
+        for (k = i + 1; k <= n; k++)
+        {
+          m[j][k] += mult * m[i][k];
+        }
+      }
+    }
+  }
 }
