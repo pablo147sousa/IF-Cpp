@@ -310,6 +310,18 @@ int remove_vertice(Grafo *g, int v)
   return v;
 }
 
-int libera_grafo(Grafo *g)
+void libera_grafo(Grafo *g)
 {
+  for (unsigned i = 0; i < g->n_vertices; i++)
+  {
+    while (g->arr_vertices[i] != NULL)
+    {
+      _remove_node(g->arr_vertices[i], g->arr_vertices[i]->vertice);
+    }
+    free(g->arr_vertices[i]);
+  }
+  free(g->arr_vertices);
+  free(g);
+
+  printf("Grafo liberado\n");
 }
