@@ -1,18 +1,9 @@
 // Implementação de algoritmos de resolução de sistemas lineares
 
-/**
- * Algoritmos para resolução de sistemas lineares recebem a
- * matriz aumentada e um ponteiro para o vetor de solução e
- * retornam o tipo da resposta.
- *    Se o SL não for TS, o tipo é -1 e x será NULL.
- *    Se o SL for determinado, o tipo é 0, x será o vetor
- * com as soluções.
- *    Se o SL for indeterminado, o tipo é 1, x será uma
- * solução, definindo com 0 as variáveis lívres.
- *    Se o SL for incompatível, o tipo é 2 e x será NULL.
-*/
-
+#pragma once
 #include <math.h>
+
+#define _ERRO_TOLERAVEL 1e-5
 
 /**
  *    Algoritmo de substituição retroativa.
@@ -35,13 +26,15 @@ int sub_retro(double **m, unsigned n, double *x)
   for (i = n - 1; i >= 0; i--)
   {
     soma = 0;
+    // Não ocorre na primeira iteração
     for (j = i + 1; j < n; j++)
     {
       soma += m[i][j] * x[j];
     }
+
     if (m[i][i] == 0)
     {
-      if (m[i][n] == soma)
+      if (m[i][n] - soma < _ERRO_TOLERAVEL)
       {
         // x[i] é variavel livre
         x[i] = 0;

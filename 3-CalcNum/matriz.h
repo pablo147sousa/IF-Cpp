@@ -1,5 +1,6 @@
 // Implementação de algoritmos e operações com matrizes
 
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
