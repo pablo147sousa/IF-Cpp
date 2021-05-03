@@ -16,6 +16,19 @@ struct Grafo
   _linked_list_node **arr_vertices;
 };
 
+// Caso v não ocorra no grafo, retorna -1.
+int _posicao_de_v_no_grafo(Grafo *g, int v)
+{
+  for (int i = 0; i < g->n_vertices; i++)
+  {
+    if (g->arr_vertices[i]->vertice == v)
+    {
+      return i;
+    }
+  }
+  return -1;
+}
+
 //   Insere o new_node na lista de forma que os vértices de menor
 // rótulo se concentrem no início da lista.
 void _insere_ordenado(_linked_list_node *lista, _linked_list_node *new_node)
@@ -47,15 +60,15 @@ void _insere_ordenado(_linked_list_node *lista, _linked_list_node *new_node)
 */
 _linked_list_node *_busca_vert_no_grafo(Grafo *g, int v)
 {
-  for (int i = 0; i < g->n_vertices; i++)
+  int i = _posicao_de_v_no_grafo(g, v);
+
+  if (i == -1)
   {
-    if (g->arr_vertices[i]->vertice == v)
-    {
-      return g->arr_vertices[i];
-    }
+    printf("O grafo nao possui o vertice {%d}\n", v);
+    return NULL;
   }
-  printf("O grafo nao possui o vertice {%d}\n", v);
-  return NULL;
+
+  return g->arr_vertices[i];
 }
 
 _linked_list_node *_cria_node(int vertice)
