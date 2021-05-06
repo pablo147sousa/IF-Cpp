@@ -106,3 +106,86 @@ void metodo_gauss(double **m, unsigned n)
     }
   }
 }
+
+unsigned *metodo_jordan(double **m, unsigned n)
+{
+  int i, j, k, l;
+  double mult;
+  bool houve_troca_de_coluna = false;
+
+  unsigned *aux = (unsigned *)calloc(n, sizeof(unsigned));
+  if (aux == NULL)
+  {
+    printf("Vetor auxiliar não alocado\n");
+    return NULL;
+  }
+
+  for (i = 0; i < n; i++)
+  {
+    aux[i] = i;
+  }
+
+  for (i = 0; i < n; i++)
+  {
+    // Se o pivô da linha for 0
+    if (m[i][i] == 0)
+    {
+      j = i + 1;
+
+      // busca a próxima coluna sem pivô nulo
+      while (j < n && m[i][j] == 0)
+      {
+        j++;
+      }
+
+      // Se houver linha j com pivô não nulo
+      // Troca as linhas i e j.
+      if (j < n)
+      {
+        _trocar_colunas(m, n, i, j);
+        aux[i] = j;
+        aux[j] = i;
+        houve_troca_de_coluna = true;
+      }
+      else
+      {
+        //    Se não houver coluna para trocar, a
+        // coluna é variável livre e pode ser zerada.
+        for (l = 0; l < n; l++)
+        {
+          m[l][i] = 0;
+        }
+      }
+    }
+
+    // Realiza a pivotação
+    if (m[i][i] != 0)
+    {
+      for (j = 0; j < n; j++)
+      {
+        // Evitando a linha do pivô
+        if (j != i)
+        {
+          mult = -m[j][i] / m[i][i];
+          // colunas anteriores ao pivô já são nulas
+          for (k = i; k <= n; k++)
+          {
+            m[j][k] += mult * m[i][k];
+          }
+        }
+      }
+    }
+  }
+
+  // Checa se precisa retornar o vetor de índices auxiliar
+  if (houve_troca_de_coluna)
+  {
+    return aux;
+  }
+  else
+  {
+    printf("Nao houve troca de coluna\n");
+    free(aux);
+    return NULL;
+  }
+}
