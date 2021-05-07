@@ -113,7 +113,8 @@ unsigned *metodo_jordan(double **m, unsigned n)
   double mult;
   bool houve_troca_de_coluna = false;
 
-  unsigned *aux = (unsigned *)calloc(n, sizeof(unsigned));
+  unsigned coluna_aux,
+           *aux = (unsigned *)calloc(n, sizeof(unsigned));
   if (aux == NULL)
   {
     printf("Vetor auxiliar não alocado\n");
@@ -143,8 +144,9 @@ unsigned *metodo_jordan(double **m, unsigned n)
       if (j < n)
       {
         _trocar_colunas(m, n, i, j);
-        aux[i] = j;
-        aux[j] = i;
+        coluna_aux = aux[i];
+        aux[i] = aux[j];
+        aux[j] = coluna_aux;
         houve_troca_de_coluna = true;
       }
       else
@@ -167,8 +169,9 @@ unsigned *metodo_jordan(double **m, unsigned n)
         if (j != i)
         {
           mult = -m[j][i] / m[i][i];
+          m[j][i] = 0;
           // colunas anteriores ao pivô já são nulas
-          for (k = i; k <= n; k++)
+          for (k = i + 1; k <= n; k++)
           {
             m[j][k] += mult * m[i][k];
           }
@@ -186,6 +189,93 @@ unsigned *metodo_jordan(double **m, unsigned n)
   {
     printf("Nao houve troca de coluna\n");
     free(aux);
+    return NULL;
+  }
+}
+
+unsigned *metodo_pivot_completo(double **m, unsigned n)
+{
+  bool houve_troca_de_coluna = false;
+  int i, j, k;
+  double *linha_aux,
+         mult,
+         max;
+  unsigned linha_max,
+           coluna_max,
+           coluna_aux,
+           *index_map = (unsigned *)malloc(n * sizeof(unsigned));
+  if (index_map == NULL)
+  {
+    printf("Vetor auxiliar não alocado\n");
+    return NULL;
+  }
+  for (i = 0; i < n; i++)
+  {
+    index_map[i] = i;
+  }
+
+  for (i = 0; i < n - 1; i++)
+  {
+    max = 0;
+    linha_max = i;
+    coluna_max = i;
+
+    // Busca o pivô, maior valor em módulo
+    for (j = i; j < n; j++)
+    {
+      for (k = i; k < n; k++)
+      {
+        if (abs(m[j][k]) > max)
+        {
+          max = abs(m[j][k]);
+          linha_max = j;
+          coluna_max = k;
+        }
+      }
+    }
+    
+    // Troca linhas
+    if (linha_max != i)
+    {
+      linha_aux = m[i];
+      m[i] = m[linha_max];
+      m[linha_max] = linha_aux;
+    }
+    // Troca colunas
+    if (coluna_max != i)
+    {
+      _trocar_colunas(m, n, i, coluna_max);
+      coluna_aux = index_map[i];
+      index_map[i] = index_map[coluna_max];
+      index_map[coluna_max] = coluna_aux;
+      houve_troca_de_coluna = true;
+    }
+      
+    // Realiza a pivotação
+    if (m[i][i] != 0)
+    {
+      for (j = i + 1; j < n; j++)
+      {
+        mult = -m[j][i] / m[i][i];
+        m[j][i] = 0;
+
+        for (k = i + 1; k <= n; k++)
+        {
+          m[j][k] += mult * m[i][k];
+        }
+      }
+    }
+  }
+
+  // Checa se precisa retornar o vetor de índices auxiliar
+  if (houve_troca_de_coluna)
+  {
+    return index_map;
+  }
+  else
+  {
+    printf("Nao houve troca de coluna\n");
+    free(index_map);
     return NULL;
   }
 }
