@@ -116,6 +116,7 @@ bool e_tri_inferior(double **matriz, unsigned n_linhas)
   return true;
 }
 
+// Verifica se a matriz é diagonal
 bool e_diagonal(double **matriz, unsigned n_linhas)
 {
   unsigned i, j;
@@ -132,4 +133,73 @@ bool e_diagonal(double **matriz, unsigned n_linhas)
   }
 
   return true;
+}
+
+/**
+ *    Verifica se a matriz quadrada obedece ao critério das linhas,
+ * no qual o módulo de cada coeficiente da diagonal principal é
+ * maior ou igual à soma dos módulos dos demais coeficientes da
+ * mesma linha
+*/
+bool _criterio_das_linhas(double **matriz, unsigned n_linhas)
+{
+  double soma;
+  for (unsigned i = 0; i < n_linhas; i++)
+  {
+    soma = 0;
+    for (unsigned j = 0; j < n_linhas; j++)
+    {
+      if (j != i)
+      {
+        soma += abs(matriz[i][j]);
+      }
+    }
+
+    if (abs(matriz[i][i]) < soma)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ *    Verifica se a matriz quadrada obedece ao critério das colunas,
+ * no qual o módulo de cada coeficiente da diagonal principal é
+ * maior ou igual à soma dos módulos dos demais coeficientes da
+ * mesma coluna
+*/
+bool _criterio_das_colunas(double **matriz, unsigned n_linhas)
+{
+  double soma;
+  for (unsigned i = 0; i < n_linhas; i++)
+  {
+    soma = 0;
+    for (unsigned j = 0; j < n_linhas; j++)
+    {
+      if (j != i)
+      {
+        soma += abs(matriz[j][i]);
+      }
+    }
+
+    if (abs(matriz[i][i]) < soma)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ *    Verifica se a matriz é diagonal dominante, ou seja,
+ * se atende ao critério das linhas ou das colunas.
+*/
+bool e_diagonal_dominante(double **matriz, unsigned n_linhas)
+{
+  if (_criterio_das_linhas(matriz, n_linhas) || _criterio_das_colunas(matriz, n_linhas))
+  {
+    return true;
+  }
+  return false;
 }
