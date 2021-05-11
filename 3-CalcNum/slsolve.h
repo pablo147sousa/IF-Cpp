@@ -2,6 +2,7 @@
 
 #pragma once
 #include <math.h>
+#include "./matriz.h"
 
 #define _ERRO_TOLERAVEL 1e-5
 
@@ -114,7 +115,7 @@ unsigned *metodo_jordan(double **m, unsigned n)
   bool houve_troca_de_coluna = false;
 
   unsigned coluna_aux,
-           *aux = (unsigned *)calloc(n, sizeof(unsigned));
+      *aux = (unsigned *)calloc(n, sizeof(unsigned));
   if (aux == NULL)
   {
     printf("Vetor auxiliar não alocado\n");
@@ -198,12 +199,12 @@ unsigned *metodo_pivot_completo(double **m, unsigned n)
   bool houve_troca_de_coluna = false;
   int i, j, k;
   double *linha_aux,
-         mult,
-         max;
+      mult,
+      max;
   unsigned linha_max,
-           coluna_max,
-           coluna_aux,
-           *index_map = (unsigned *)malloc(n * sizeof(unsigned));
+      coluna_max,
+      coluna_aux,
+      *index_map = (unsigned *)malloc(n * sizeof(unsigned));
   if (index_map == NULL)
   {
     printf("Vetor auxiliar não alocado\n");
@@ -233,7 +234,7 @@ unsigned *metodo_pivot_completo(double **m, unsigned n)
         }
       }
     }
-    
+
     // Troca linhas
     if (linha_max != i)
     {
@@ -250,7 +251,7 @@ unsigned *metodo_pivot_completo(double **m, unsigned n)
       index_map[coluna_max] = coluna_aux;
       houve_troca_de_coluna = true;
     }
-      
+
     // Realiza a pivotação
     if (m[i][i] != 0)
     {
@@ -278,4 +279,125 @@ unsigned *metodo_pivot_completo(double **m, unsigned n)
     free(index_map);
     return NULL;
   }
+}
+
+double *metodo_jacobi(double **m,
+                      unsigned n,
+                      unsigned max_iter = 100,
+                      double tolerancia = _ERRO_TOLERAVEL)
+{
+  unsigned i, j,
+      iter = 0,
+      contador = 0;
+  double *atual = (double *)calloc(n, sizeof(double)),
+         *anterior = (double *)calloc(n, sizeof(double)),
+         *aux,
+         soma,
+         erro_acumulado;
+  if (anterior == NULL)
+  {
+    printf("Nao foi possivel alocar vetor auxiliar\n");
+    return NULL;
+  }
+  if (atual == NULL)
+  {
+    printf("Nao foi possivel alocar vetor de respostas\n");
+    free(anterior);
+    return NULL;
+  }
+
+  do
+  {
+    erro_acumulado = 0;
+    for (i = 0; i < n; i++)
+    {
+      if (m[i][i] != 0)
+      {
+        soma = 0;
+        for (j = 0; j < n; j++)
+        {
+          if (i != j)
+          {
+            soma += m[i][j] * anterior[j];
+          }
+        }
+        atual[i] = (m[i][n] - soma) / m[i][i];
+        erro_acumulado += abs(atual[i] - anterior[i]);
+      }
+    }
+
+    iter++;
+    if (erro_acumulado < tolerancia)
+    {
+      contador++;
+    }
+    else
+    {
+      contador = 0;
+    }
+
+    aux = anterior;
+    anterior = atual;
+    atual = aux;
+
+  } while (contador < 5 && iter < max_iter);
+
+  printf("Jacobi concluido depois de %u/%u iteracoes\n", iter - contador, max_iter);
+
+  free(atual);
+  return anterior;
+}
+
+double *metodo_gauss_seidel(double **m,
+                            unsigned n,
+                            unsigned max_iter = 100,
+                            double tolerancia = _ERRO_TOLERAVEL)
+{
+  unsigned i, j,
+      iter = 0,
+      contador = 0;
+  double *x = (double *)calloc(n, sizeof(double)),
+         soma,
+         x_anterior,
+         erro_acumulado;
+  if (x == NULL)
+  {
+    printf("Nao foi possivel alocar vetor de respostas\n");
+    return NULL;
+  }
+
+  do
+  {
+    iter++;
+    erro_acumulado = 0;
+    for (i = 0; i < n; i++)
+    {
+      if (m[i][i] != 0)
+      {
+        soma = 0;
+        for (j = 0; j < n; j++)
+        {
+          if (i != j)
+          {
+            soma += m[i][j] * x[j];
+          }
+        }
+        x_anterior = x[i];
+        x[i] = (m[i][n] - soma) / m[i][i];
+        erro_acumulado += abs(x[i] - x_anterior);
+      }
+    }
+
+    if (erro_acumulado < tolerancia)
+    {
+      contador++;
+    }
+    else
+    {
+      contador = 0;
+    }
+  } while (contador < 5 && iter < max_iter);
+
+  printf("Gauss-Seidel concluido depois de %u/%u iteracoes\n", iter - contador, max_iter);
+  return x;
 }
