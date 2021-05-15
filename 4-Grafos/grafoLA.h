@@ -4,77 +4,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct _linked_list_node
+// Nó da lista de adjacência
+typedef struct _node
 {
-  int vertice;
-  _linked_list_node *next;
+  // Rótulo do vertice adjacente
+  int v_adjacente;
+  //Posição do vértice adjacente no array do grafo
+  unsigned pos_adjacente;
+  // Próximo nó ou NULL se este for o último
+  _node *next;
+} Lista;
+
+struct Vertice
+{
+  // Rótulo do vértice
+  int v;
+  // posição do vértice no array do grafo
+  unsigned _pos;
+  // Valor temporário para alguns algoritmos
+  unsigned _temp;
+  // Lista de Adjacências do Vértice
+  Lista *la;
 };
 
 struct Grafo
 {
-  unsigned n_vertices;
-  _linked_list_node **arr_vertices;
+  unsigned n_vertices,
+      m_arestas;
+  Vertice **arr;
 };
 
-// Caso v não ocorra no grafo, retorna -1.
-int _posicao_de_v_no_grafo(Grafo *g, int v)
+_node *_cria_node(int v_adjacente, unsigned pos_v)
 {
-  for (int i = 0; i < g->n_vertices; i++)
-  {
-    if (g->arr_vertices[i]->vertice == v)
-    {
-      return i;
-    }
-  }
-  return -1;
-}
-
-//   Insere o new_node na lista de forma que os vértices de menor
-// rótulo se concentrem no início da lista.
-void _insere_ordenado(_linked_list_node *lista, _linked_list_node *new_node)
-{
-  if (lista != NULL && new_node != NULL)
-  {
-    _linked_list_node *node_atual = lista;
-
-    /**
-     *  Navega pela lista até o ultimo nó cujo o rótulo do vértice
-     * seja menor que o rótulo do new_node.
-     *  O loop também para se chegar no ultimo nó antes da condição.
-    */
-    while (node_atual->next != NULL && node_atual->next->vertice <= new_node->vertice)
-    {
-      node_atual = node_atual->next;
-    }
-
-    new_node->next = node_atual->next;
-    node_atual->next = new_node;
-  }
-}
-
-/**
- *    Verifica se o vértice v ocorre em g:
- *  - Em caso afirmativo: retorna o ponteiro para
- * a lista de adjacências de v;
- *  - Em caso negativo: retorna NULL;
-*/
-_linked_list_node *_busca_vert_no_grafo(Grafo *g, int v)
-{
-  int i = _posicao_de_v_no_grafo(g, v);
-
-  if (i == -1)
-  {
-    printf("O grafo nao possui o vertice {%d}\n", v);
-    return NULL;
-  }
-
-  return g->arr_vertices[i];
-}
-
-_linked_list_node *_cria_node(int vertice)
-{
-  _linked_list_node *node = (_linked_list_node *)malloc(sizeof(_linked_list_node));
-
+  _node *node = (_node *)malloc(sizeof(_node));
   if (node == NULL)
   {
     printf("Nao foi possível alocar um novo node\n");
@@ -82,8 +44,25 @@ _linked_list_node *_cria_node(int vertice)
   }
 
   node->next = NULL;
-  node->vertice = vertice;
+  node->v_adjacente = v_adjacente;
+  node->pos_adjacente = pos_v;
   return node;
+}
+
+Vertice *_cria_vertice(int vertice, unsigned pos_v)
+{
+  Vertice *v = (Vertice *)malloc(sizeof(Vertice));
+  if (v == NULL)
+  {
+    printf("Nao foi possível alocar um novo vertice\n");
+    return NULL;
+  }
+
+  v->v = vertice;
+  v->la = NULL;
+  v->_temp = 0;
+  v->_pos = pos_v;
+  return v;
 }
 
 Grafo *cria_grafo(unsigned n_vertices)
@@ -96,72 +75,99 @@ Grafo *cria_grafo(unsigned n_vertices)
     return NULL;
   }
 
-  // Alocando vetor de nós
-  _linked_list_node **node_arr = (_linked_list_node **)malloc(sizeof(_linked_list_node *) * n_vertices);
-  if (node_arr == NULL)
+  // Alocando vetor de vértices
+  Vertice **arr = (Vertice **)malloc(n_vertices * sizeof(Vertice *));
+  if (arr == NULL)
   {
     free(g);
-    printf("Nao deu para alocar o vetor de vertices\n");
+    printf("Nao deu para alocar o vetor de vértices\n");
     return NULL;
   }
 
-  // Alocando nós e vertices
-  _linked_list_node *n;
-  for (int i = 0; i < n_vertices; i++)
+  // Alocando vértices
+  Vertice *v_aux;
+  for (unsigned i = 0; i < n_vertices; i++)
   {
-    n = _cria_node(i);
-    if (n == NULL)
+    v_aux = _cria_vertice(i, i);
+    if (v_aux == NULL)
     {
       printf("Nao deu para alocar o vertice {%d}\n", i);
-      for (int j = 0; j < i; j++)
+      for (unsigned j = 0; j < i; j++)
       {
-        free(node_arr[j]);
+        free(arr[j]);
       }
-      free(node_arr);
+      free(arr);
       free(g);
       return NULL;
     }
-
-    node_arr[i] = n;
+    arr[i] = v_aux;
   }
 
   g->n_vertices = n_vertices;
-  g->arr_vertices = node_arr;
+  g->m_arestas = 0;
+  g->arr = arr;
   printf("Grafo sem arestas criado!\n");
   return g;
 }
 
-int vertices_sao_adjacentes(Grafo *g, int v_a, int v_b)
+// Retorna 1 se v_a possui um arco dirigido a v_b
+// Retorna 0 caso contrário
+bool _tem_arco(Vertice *v_a, int v_b)
 {
-  if (v_a == v_b)
+  int v_atual = -1;
+  _node *atual = v_a->la;
+  while (atual != NULL && atual->v_adjacente <= v_b)
   {
-    printf("vertices sao iguais\n");
+    v_atual = atual->v_adjacente;
+    atual = atual->next;
+  }
+  return v_atual == v_b;
+}
+
+bool _tem_aresta(Vertice *v_a, Vertice *v_b)
+{
+  return _tem_arco(v_a, v_b->v) && _tem_arco(v_b, v_a->v);
+}
+
+//   Insere o new_node na lista de forma que os vértices de menor
+// rótulo se concentrem no início da lista.
+void _insere_ordenado(Lista *lista, _node *new_node)
+{
+  /**
+   *  Navega pela lista até o ultimo nó cujo o rótulo do vértice
+   * seja menor que o rótulo do new_node.
+   *  O loop também para se chegar no ultimo nó antes da condição.
+  */
+  _node *node_atual = lista;
+  while (node_atual->next != NULL && node_atual->next->v_adjacente <= new_node->v_adjacente)
+  {
+    node_atual = node_atual->next;
+  }
+
+  new_node->next = node_atual->next;
+  node_atual->next = new_node;
+}
+
+int _cria_arco(Vertice *v_a, Vertice *v_b)
+{
+  if (_tem_arco(v_a, v_b->v))
+  {
+    printf("Vertice %d ja tem arco para o vertice %d\n", v_a->v, v_b->v);
     return 0;
   }
 
-  _linked_list_node *aux_a = _busca_vert_no_grafo(g, v_a),
-                    *aux_b = _busca_vert_no_grafo(g, v_b);
-  if (aux_a == NULL || aux_b == NULL)
+  _node *n = _cria_node(v_b->v, v_b->_pos);
+  if (n == NULL)
   {
-    printf("Um ou mais vertices nao ocorrem no grafo\n");
-    return 0;
+    printf("Nao foi possivel alocar um novo no\n");
+    return -1;
   }
 
-  int v_min = v_a < v_b ? v_a : v_b;
-  _linked_list_node *aux_max = v_a < v_b ? aux_b : aux_a;
-
-  while (aux_max != NULL && aux_max->vertice <= v_min)
-  {
-    if (aux_max->vertice == v_min)
-    {
-      return 1;
-    }
-    aux_max = aux_max->next;
-  }
+  _insere_ordenado(v_a->la, n);
   return 0;
 }
 
-int cria_aresta(Grafo *g, int v_a, int v_b)
+int cria_aresta(Vertice *v_a, Vertice *v_b)
 {
   if (v_a == v_b)
   {
@@ -169,49 +175,26 @@ int cria_aresta(Grafo *g, int v_a, int v_b)
     return -1;
   }
 
-  _linked_list_node *aux_a = _busca_vert_no_grafo(g, v_a),
-                    *aux_b = _busca_vert_no_grafo(g, v_b),
-                    *new_a, *new_b;
-  if (aux_a == NULL || aux_b == NULL)
-  {
-    printf("valor de vertice invalido\n");
-    return -1;
-  }
-
-  if (vertices_sao_adjacentes(g, v_a, v_b))
+  if (_tem_aresta(v_a, v_b))
   {
     printf("Vertices ja sao adjacentes\n");
     return 0;
   }
 
-  new_a = _cria_node(v_a);
-  if (new_a == NULL)
-  {
-    printf("Nao foi possivel alocar no de vertice {%d}\n", v_a);
-    return -1;
-  }
+  _cria_arco(v_a, v_b);
+  _cria_arco(v_b, v_a);
 
-  new_b = _cria_node(v_b);
-  if (new_b == NULL)
-  {
-    free(new_a);
-    printf("Nao foi possivel alocar no de vertice {%d}\n", v_b);
-    return -1;
-  }
-
-  _insere_ordenado(aux_a, new_b);
-  _insere_ordenado(aux_b, new_a);
   printf("Nova aresta criada\n");
   return 0;
 }
 
-void _mostra_lista_de_adjacencia(_linked_list_node *lista)
+void _mostra_lista_de_adjacencia(Lista *lista)
 {
-  _linked_list_node *atual = lista;
+  _node *atual = lista;
   printf("{");
   while (atual != NULL)
   {
-    printf("%d", atual->vertice);
+    printf("%d", atual->v_adjacente);
     if (atual->next != NULL)
     {
       printf(", ");
@@ -231,110 +214,96 @@ void mostra_grafo(Grafo *g)
   printf("Grafo\nI\nv\n");
   for (unsigned i = 0; i < g->n_vertices; i++)
   {
-    printf("[%d]->", g->arr_vertices[i]->vertice);
-    _mostra_lista_de_adjacencia(g->arr_vertices[i]);
+    printf("[%d]->", g->arr[i]->v);
+    _mostra_lista_de_adjacencia(g->arr[i]->la);
   }
 }
 
-// Retorna 1 caso consiga remover o nó;
-// Retorna 0 caso contrário.
-int _remove_node(_linked_list_node *lista, int v)
+// Retorna 0 caso consiga remover o nó;
+// Retorna 1 caso contrário.
+int _remove_node(Lista *la, int v)
 {
-  if (lista == NULL)
+  if (la == NULL)
   {
     printf("lista de adjacencia vazia\n");
     return 0;
   }
 
-  _linked_list_node *ant = lista,
-                    *aux = lista->next;
+  _node *ant = la,
+        *aux = la->next;
 
-  // O laço termina com aux->vertice == v ou no ultimo nó.
-  while (aux->next != NULL && aux->vertice < v)
+  // O laço termina com aux->v_adjacente == v ou no ultimo nó.
+  while (aux->next != NULL && aux->v_adjacente < v)
   {
     ant = aux;
     aux = aux->next;
   }
 
-  if (aux->vertice != v)
+  if (aux->v_adjacente != v)
   {
     printf("Nao ha vertice {%d} na lista de adjacencia\n", v);
-    return 0;
+    return 1;
   }
 
   ant->next = aux->next;
   aux->next = NULL;
   free(aux);
-
-  return 1;
-}
-
-int remove_aresta(Grafo *g, int v_a, int v_b)
-{
-  if (vertices_sao_adjacentes(g, v_a, v_b))
-  {
-    _linked_list_node *aux_a = _busca_vert_no_grafo(g, v_a),
-                      *aux_b = _busca_vert_no_grafo(g, v_b);
-
-    if (_remove_node(aux_a, v_b) && _remove_node(aux_b, v_b))
-    {
-      printf("Aresta removida\n");
-      return 1;
-    }
-  }
-
-  printf("vertices nao sao adjacentes\n");
   return 0;
 }
 
-int remove_vertice(Grafo *g, int v)
+int remove_aresta(Vertice *v_a, Vertice *v_b)
 {
-  _linked_list_node *lista_de_v = _busca_vert_no_grafo(g, v);
-  if (lista_de_v == NULL)
+  if (_tem_aresta(v_a, v_b))
   {
-    printf("Vertice nao ocorre no grafo\n");
-    return -1;
+    _remove_node(v_a->la, v_b->v);
+    _remove_node(v_b->la, v_a->v);
+    printf("Aresta removida\n");
+    return 0;
   }
 
-  // Remove as arestas adjacêntes ao vertice v
-  int v_aux;
-  while (lista_de_v->next != NULL)
+  printf("vertices nao sao adjacentes\n");
+  return 1;
+}
+
+int remove_vertice(Grafo *g, unsigned pos_v)
+{
+  Vertice *v = g->arr[pos_v];
+  while (v->la != NULL)
   {
-    v_aux = lista_de_v->next->vertice;
-    remove_aresta(g, v, v_aux);
+    // Remove as arestas adjacêntes ao vertice v
+    remove_aresta(v, g->arr[v->la->pos_adjacente]);
   }
 
   // Dessa forma a ultima iteração atinge no máximo g->arr_vertices[n-1]
   g->n_vertices--;
-  for (unsigned i = 0; i < g->n_vertices; i++)
+  for (unsigned i = pos_v; i < g->n_vertices; i++)
   {
-    // Reordena o array de vertices garantindo que, no final, o vertice v seja o último.
-    if (g->arr_vertices[i] == lista_de_v)
-    {
-      g->arr_vertices[i] = g->arr_vertices[i + 1];
-      g->arr_vertices[i + 1] = lista_de_v;
-    }
+    g->arr[i] = g->arr[i + 1];
   }
-  g->arr_vertices = (_linked_list_node **)realloc(g->arr_vertices, sizeof(_linked_list_node *) * g->n_vertices);
+  g->arr[g->n_vertices] = NULL;
+  g->arr = (Vertice **)realloc(g->arr, g->n_vertices * sizeof(Vertice *));
 
-  free(lista_de_v);
-  printf("Vertice {%d} removido\n", v);
+  int rot_v = v->v;
+  free(v);
 
-  return v;
+  printf("Vertice {%d} removido\n", rot_v);
+  return rot_v;
 }
 
 void libera_grafo(Grafo *g)
 {
+  Lista *la;
   for (unsigned i = 0; i < g->n_vertices; i++)
   {
-    while (g->arr_vertices[i] != NULL)
+    la = g->arr[i]->la;
+    while (la != NULL)
     {
-      _remove_node(g->arr_vertices[i], g->arr_vertices[i]->vertice);
+      _remove_node(la, la->v_adjacente);
     }
-    free(g->arr_vertices[i]);
+    free(g->arr[i]);
   }
-  free(g->arr_vertices);
-  free(g);
 
+  free(g->arr);
+  free(g);
   printf("Grafo liberado\n");
 }
