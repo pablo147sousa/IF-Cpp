@@ -197,9 +197,5 @@ bool _criterio_das_colunas(double **matriz, unsigned n_linhas)
 */
 bool e_diagonal_dominante(double **matriz, unsigned n_linhas)
 {
-  if (_criterio_das_linhas(matriz, n_linhas) || _criterio_das_colunas(matriz, n_linhas))
-  {
-    return true;
-  }
-  return false;
+  return _criterio_das_linhas(matriz, n_linhas) || _criterio_das_colunas(matriz, n_linhas);
 }

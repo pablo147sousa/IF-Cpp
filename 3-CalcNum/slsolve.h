@@ -4,6 +4,8 @@
 #include <math.h>
 #include "./matriz.h"
 
+#define _MAX_ITER 100
+#define _MAX_REPEAT 5
 #define _ERRO_TOLERAVEL 1e-5
 
 /**
@@ -61,7 +63,6 @@ int sub_retro(double **m, unsigned n, double *x)
  *    Transforma a matriz aumentada em um SL TS equivalente
  * @param m a matriz aumentada a ser modificada pelo método;
  * @param n o número de linhas da matriz.
- * 
 */
 void metodo_gauss(double **m, unsigned n)
 {
@@ -283,7 +284,8 @@ unsigned *metodo_pivot_completo(double **m, unsigned n)
 
 double *metodo_jacobi(double **m,
                       unsigned n,
-                      unsigned max_iter = 100,
+                      unsigned max_iter = _MAX_ITER,
+                      unsigned max_repeat = _MAX_REPEAT,
                       double tolerancia = _ERRO_TOLERAVEL)
 {
   unsigned i, j,
@@ -304,6 +306,11 @@ double *metodo_jacobi(double **m,
     printf("Nao foi possivel alocar vetor de respostas\n");
     free(anterior);
     return NULL;
+  }
+
+  if (!e_diagonal_dominante(m, n))
+  {
+    printf("Matriz nao e diagonal dominante, solução pode nao convergir");
   }
 
   do
@@ -350,7 +357,8 @@ double *metodo_jacobi(double **m,
 
 double *metodo_gauss_seidel(double **m,
                             unsigned n,
-                            unsigned max_iter = 100,
+                            unsigned max_iter = _MAX_ITER,
+                            unsigned max_repeat = _MAX_REPEAT,
                             double tolerancia = _ERRO_TOLERAVEL)
 {
   unsigned i, j,
@@ -364,6 +372,11 @@ double *metodo_gauss_seidel(double **m,
   {
     printf("Nao foi possivel alocar vetor de respostas\n");
     return NULL;
+  }
+
+  if (!e_diagonal_dominante(m, n))
+  {
+    printf("Matriz nao e diagonal dominante, solução pode nao convergir");
   }
 
   do
@@ -396,7 +409,7 @@ double *metodo_gauss_seidel(double **m,
     {
       contador = 0;
     }
-  } while (contador < 5 && iter < max_iter);
+  } while (contador < max_repeat && iter < max_iter);
 
   printf("Gauss-Seidel concluido depois de %u/%u iteracoes\n", iter - contador, max_iter);
   return x;
