@@ -9,6 +9,8 @@ typedef struct _node
 {
   // Rótulo do vertice adjacente
   int v_adjacente;
+  // Peso do arco
+  int w;
   //Posição do vértice adjacente no array do grafo
   unsigned pos_adjacente;
   // Próximo nó ou NULL se este for o último
@@ -131,21 +133,28 @@ bool _tem_aresta(Vertice *v_a, Vertice *v_b)
 
 //   Insere o new_node na lista de forma que os vértices de menor
 // rótulo se concentrem no início da lista.
-void _insere_ordenado(Lista *lista, _node *new_node)
+void _insere_ordenado(Vertice *v, _node *new_node)
 {
   /**
    *  Navega pela lista até o ultimo nó cujo o rótulo do vértice
    * seja menor que o rótulo do new_node.
    *  O loop também para se chegar no ultimo nó antes da condição.
   */
-  _node *node_atual = lista;
-  while (node_atual->next != NULL && node_atual->next->v_adjacente <= new_node->v_adjacente)
+  if (v->la == NULL)
   {
-    node_atual = node_atual->next;
+    v->la = new_node;
+  }
+  else
+  {
+    _node *node_atual = v->la;
+    while (node_atual->next != NULL && node_atual->next->v_adjacente <= new_node->v_adjacente)
+    {
+      node_atual = node_atual->next;
+    }
+    new_node->next = node_atual->next;
+    node_atual->next = new_node;
   }
 
-  new_node->next = node_atual->next;
-  node_atual->next = new_node;
 }
 
 int _cria_arco(Vertice *v_a, Vertice *v_b)
@@ -163,7 +172,7 @@ int _cria_arco(Vertice *v_a, Vertice *v_b)
     return -1;
   }
 
-  _insere_ordenado(v_a->la, n);
+  _insere_ordenado(v_a, n);
   return 0;
 }
 
@@ -221,27 +230,27 @@ void mostra_grafo(Grafo *g)
 
 // Retorna 0 caso consiga remover o nó;
 // Retorna 1 caso contrário.
-int _remove_node(Lista *la, int v)
+int _remove_node(Vertice *v, int arco)
 {
-  if (la == NULL)
+  if (v->la == NULL)
   {
     printf("lista de adjacencia vazia\n");
     return 0;
   }
 
-  _node *ant = la,
-        *aux = la->next;
+  _node *ant = v->la,
+        *aux = v->la->next;
 
   // O laço termina com aux->v_adjacente == v ou no ultimo nó.
-  while (aux->next != NULL && aux->v_adjacente < v)
+  while (aux->next != NULL && aux->v_adjacente < arco)
   {
     ant = aux;
     aux = aux->next;
   }
 
-  if (aux->v_adjacente != v)
+  if (aux->v_adjacente != arco)
   {
-    printf("Nao ha vertice {%d} na lista de adjacencia\n", v);
+    printf("Nao ha vertice {%d} na lista de adjacencia\n", arco);
     return 1;
   }
 
@@ -255,8 +264,8 @@ int remove_aresta(Vertice *v_a, Vertice *v_b)
 {
   if (_tem_aresta(v_a, v_b))
   {
-    _remove_node(v_a->la, v_b->v);
-    _remove_node(v_b->la, v_a->v);
+    _remove_node(v_a, v_b->v);
+    _remove_node(v_b, v_a->v);
     printf("Aresta removida\n");
     return 0;
   }
@@ -292,13 +301,11 @@ int remove_vertice(Grafo *g, unsigned pos_v)
 
 void libera_grafo(Grafo *g)
 {
-  Lista *la;
   for (unsigned i = 0; i < g->n_vertices; i++)
   {
-    la = g->arr[i]->la;
-    while (la != NULL)
+    while (g->arr[i]->la != NULL)
     {
-      _remove_node(la, la->v_adjacente);
+      _remove_node(g->arr[i], g->arr[i]->la->v_adjacente);
     }
     free(g->arr[i]);
   }
