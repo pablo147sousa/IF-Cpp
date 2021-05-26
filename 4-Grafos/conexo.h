@@ -20,16 +20,16 @@ int e_conexo(Grafo *g)
     return 1;
   }
 
+  int num_vert_visitados = 1,
+      posicao_de_v = 0;
+      
+  Vertice *v = g->arr[posicao_de_v];
+  _node *aresta;
   Pilha *p = cria_pilha(g->n_vertices);
   if (p == NULL)
   {
     return -1;
   }
-
-  _linked_list_node *aux;
-  int num_vert_visitados = 1,
-      posicao_de_v = 0,
-      v = g->arr_vertices[posicao_de_v]->vertice;
 
   int  *vert_visitados = (int *)calloc(g->n_vertices, sizeof(int));
   if (vert_visitados == NULL)
@@ -40,24 +40,23 @@ int e_conexo(Grafo *g)
   }
 
   vert_visitados[posicao_de_v] = 1;
-  empilha(p, v);
+  empilha(p, v->_pos);
 
   while (!esta_vazia(p))
   {
-    v = desempilha(p);
-    aux = _busca_vert_no_grafo(g, v);
+    posicao_de_v = desempilha(p);
+    aresta = g->arr[posicao_de_v]->la;
 
     // Para cada vértice w adjacente a v
-    while (aux != NULL)
+    while (aresta != NULL)
     {
-      if (vert_visitados[posicao_de_v] == 0)
+      if (vert_visitados[aresta->pos_adjacente] == 0)
       {
-        vert_visitados[aux->vertice] = 1;
-        empilha(p, aux->vertice);
+        vert_visitados[aresta->pos_adjacente] = 1;
+        empilha(p, aresta->pos_adjacente);
         num_vert_visitados++;
       }
-      aux = aux->next;
-      posicao_de_v = _posicao_de_v_no_grafo(g, v);
+      aresta = aresta->next;
     }
   }
   
