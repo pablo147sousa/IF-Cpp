@@ -3,16 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct _node
+struct _node_pilha
 {
   int rotulo;
-  struct _node *abaixo;
+  struct _node_pilha *abaixo;
 };
 
 struct Pilha
 {
   unsigned _max, tam = 0;
-  struct _node *topo;
+  struct _node_pilha *topo;
 };
 
 int esta_vazia(struct Pilha *p)
@@ -25,11 +25,11 @@ int esta_cheia(struct Pilha *p)
   return p->tam == p->_max;
 }
 
-struct Pilha *cria_pilha(unsigned limite)
+Pilha *cria_pilha(unsigned limite)
 {
   // Cria a pilha com limite definido.
 
-  struct Pilha *p = (struct Pilha *)malloc(sizeof(struct Pilha));
+  Pilha *p = (Pilha *)malloc(sizeof(Pilha));
 
   if (p == NULL)
   {
@@ -56,7 +56,7 @@ int empilha(struct Pilha *p, int rot)
     return -1;
   }
 
-  struct _node *novo = (struct _node *)malloc(sizeof(struct _node));
+  _node_pilha *novo = (_node_pilha *)malloc(sizeof(_node_pilha));
   if (novo == NULL)
   {
     printf("sem memoria para alocar elemento da pilha!!");
@@ -84,7 +84,7 @@ int desempilha(struct Pilha *p)
     return 0;
   }
 
-  struct _node *antigo = p->topo;
+  _node_pilha *antigo = p->topo;
   int rot = antigo->rotulo;
 
   p->topo = antigo->abaixo;
