@@ -109,92 +109,73 @@ void metodo_gauss(double **m, unsigned n)
   }
 }
 
-unsigned *metodo_jordan(double **m, unsigned n)
+unsigned *metodo_jordan(double **matriz, unsigned n_linhas)
 {
-  int i, j, k, l;
   double mult;
-  bool houve_troca_de_coluna = false;
-
-  unsigned coluna_aux,
-      *aux = (unsigned *)calloc(n, sizeof(unsigned));
+  unsigned i, j, coluna_aux;
+  // vetor auxiliar mapeia as colunas trocadas
+  unsigned *aux = (unsigned *)calloc(n_linhas, sizeof(unsigned));
   if (aux == NULL)
   {
     printf("Vetor auxiliar não alocado\n");
     return NULL;
   }
 
-  for (i = 0; i < n; i++)
+  for (i = 0; i < n_linhas; i++)
   {
     aux[i] = i;
   }
 
-  for (i = 0; i < n; i++)
+  for (i = 0; i < n_linhas; i++)
   {
     // Se o pivô da linha for 0
-    if (m[i][i] == 0)
+    if (matriz[i][i] == 0)
     {
       j = i + 1;
 
       // busca a próxima coluna sem pivô nulo
-      while (j < n && m[i][j] == 0)
+      while (j < n_linhas && matriz[i][j] == 0)
       {
         j++;
       }
 
       // Se houver linha j com pivô não nulo
       // Troca as linhas i e j.
-      if (j < n)
+      if (j < n_linhas)
       {
-        _trocar_colunas(m, n, i, j);
+        _trocar_colunas(matriz, n_linhas, i, j);
         coluna_aux = aux[i];
         aux[i] = aux[j];
         aux[j] = coluna_aux;
-        houve_troca_de_coluna = true;
       }
       else
       {
-        //    Se não houver coluna para trocar, a
+        // Se não houver coluna para trocar, a
         // coluna é variável livre e pode ser zerada.
-        for (l = 0; l < n; l++)
+        for (unsigned l = 0; l < n_linhas; l++)
         {
-          m[l][i] = 0;
+          matriz[l][i] = 0;
         }
       }
     }
 
     // Realiza a pivotação
-    if (m[i][i] != 0)
+    if (matriz[i][i] != 0)
     {
-      for (j = 0; j < n; j++)
+      for (j = i + 1; j < n_linhas; j++)
       {
-        // Evitando a linha do pivô
-        if (j != i)
+        mult = -matriz[j][i] / matriz[i][i];
+        // colunas anteriores ao pivô já são nulas
+        for (unsigned k = i; k <= n_linhas; k++)
         {
-          mult = -m[j][i] / m[i][i];
-          m[j][i] = 0;
-          // colunas anteriores ao pivô já são nulas
-          for (k = i + 1; k <= n; k++)
-          {
-            m[j][k] += mult * m[i][k];
-          }
+          matriz[j][k] += mult * matriz[i][k];
         }
       }
     }
   }
 
-  // Checa se precisa retornar o vetor de índices auxiliar
-  if (houve_troca_de_coluna)
-  {
-    return aux;
-  }
-  else
-  {
-    printf("Nao houve troca de coluna\n");
-    free(aux);
-    return NULL;
-  }
+  return aux;
 }
-
 unsigned *metodo_pivot_completo(double **m, unsigned n)
 {
   bool houve_troca_de_coluna = false;
