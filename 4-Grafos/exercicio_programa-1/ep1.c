@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 
 #define FILENAME_LENGTH 20
@@ -116,10 +117,10 @@ Resposta *alocar_resposta(int len)
 
 void mostrar_caminho_recursivo(Resposta *r, int vertice)
 {
-  if (r->anterior[vertice - 1] != -1)
+  if (r->anterior[vertice] != -1)
   {
-    mostrar_caminho_recursivo(r, r->anterior[vertice - 1]);
-    printf(" (%d -> %d)", r->anterior[vertice - 1], vertice);
+    mostrar_caminho_recursivo(r, r->anterior[vertice]);
+    printf(" (%d -> %d)", r->anterior[vertice] + 1, vertice + 1);
   }
 }
 
@@ -133,7 +134,7 @@ void mostrar_caminho_minimo(Resposta *r, int start, int stop)
   else
   {
     printf("Caminho minimo do vertice %d para o vertice %d:\n", start, stop);
-    mostrar_caminho_recursivo(r, stop);
+    mostrar_caminho_recursivo(r, stop - 1);
     printf("\nO custo para chegar no vertice %d entao e: %lf\n", stop, r->custo[stop - 1]);
   }
 }
@@ -150,6 +151,73 @@ void liberar_resposta(Resposta *r)
 
 Resposta *algoritmo_dijkstra(Grafo *g, int start, int stop)
 {
+  Resposta *r = alocar_resposta(g->n_vertices);
+  if (r == NULL)
+  {
+    return NULL;
+  }
+
+  // Inicializar resposta
+  for (unsigned i = 0; i < g->n_vertices; i++)
+  {
+    if (g->matriz_adjacente[start - 1][i] != -1)
+    {
+      r->anterior[i] = start - 1;
+      r->custo[i] = g->matriz_adjacente[start - 1][i];
+    }
+    else
+    {
+      r->custo[i] = INFINITY;
+      r->anterior[i] = -1;
+    }
+  }
+  r->custo[start - 1] = 0;
+
+  bool *z = (bool *)calloc(g->n_vertices, sizeof(bool));
+  if (z == NULL)
+  {
+    liberar_resposta(r);
+    return NULL;
+  }
+  z[start - 1] = true;
+
+  // Posição do vértice inicial no grafo
+  int v_aux = start - 1;
+  double custo_min_aux = 0, _temp_custo_i;
+  while (v_aux != stop - 1 && custo_min_aux != INFINITY)
+  {
+    custo_min_aux = INFINITY;
+    for (unsigned i = 0; i < g->n_vertices; i++)
+    {
+      // Se o vértice não está em Z
+      // && o custo para chegar nele for o menor dentre os arcos da fronteira
+      _temp_custo_i = r->custo[i];
+      if (z[i] == false
+          && r->custo[i] >= 0
+          && r->custo[i] < custo_min_aux)
+      {
+        custo_min_aux = r->custo[i];
+        // define-se novo vértice a ser inserido em Z
+        v_aux = i;
+      }
+    }
+
+    //Distâncias dos novos vizinhos de z//  && 
+    if (v_aux != stop - 1 && custo_min_aux != INFINITY)
+    {
+      for (unsigned i = 0; i < g->n_vertices; i++)
+        if (z[i] == false
+            && g->matriz_adjacente[v_aux][i] != -1
+            && r->custo[v_aux] + g->matriz_adjacente[v_aux][i] < r->custo[i])
+        {
+          r->custo[i] = r->custo[v_aux] + g->matriz_adjacente[v_aux][i];
+          r->anterior[i] = v_aux;
+        }
+        z[v_aux] = true;
+    }
+  }
+
+  return r;
 }
 
 /* Algoritmo de Dijkstra - FIM */
@@ -161,10 +229,11 @@ int main(int argc, char const *argv[])
   printf("Digite o nome do arquivo: ");
   scanf("%20s", filename);
 
+  // path: "4-Grafos/exercicio_programa-1/teste-0.txt"
   FILE *arq = fopen(filename, "r");
   if (arq == NULL)
   {
-    printf("Arquivo nao foi aberto");
+    printf("Arquivo nao foi aberto\n");
     return -1;
   }
 
