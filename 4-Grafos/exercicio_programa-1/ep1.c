@@ -5,10 +5,9 @@
  *  - Lucas Agostinho Fernandes
  *  - Vitor Bryan Melo de Lima
  * 
- * Convenções de Código:
- *  - identação com 2 espaços
- *  - snake case para nomes de variaveis e funções
- *  -
+ * Orientações de Código:
+ *  - O grafo é implementado como uma matriz de adjacências
+ *  - 
  *  -
 */
 
@@ -188,7 +187,8 @@ Resposta *algoritmo_dijkstra(Grafo *g, int start, int stop)
   int v_aux = start - 1;
   double custo_min_aux = 0;
 
-  // Enquanto v_aux não for o vértice de destino EE o custo mínimo não for INFINITO
+  // Enquanto v_aux não for o vértice de destino
+  // EE o custo mínimo não for INFINITO
   while (v_aux != stop - 1
          && custo_min_aux != INFINITY)
   {
@@ -227,6 +227,7 @@ Resposta *algoritmo_dijkstra(Grafo *g, int start, int stop)
           r->anterior[i] = v_aux;
         }
       }
+      // Adiciona v_aux a Z
       z[v_aux] = true;
     }
   }
@@ -242,7 +243,8 @@ int main(int argc, char const *argv[])
   printf("Digite o nome do arquivo: ");
   scanf("%20s", filename);
 
-  // path: "4-Grafos/exercicio_programa-1/teste-0.txt"
+  // Abre o arquivo de nome passado pela linha de comando
+  printf("\nfilename: %s\n", filename);
   FILE *arq = fopen(filename, "r");
   if (arq == NULL)
   {
@@ -270,21 +272,11 @@ int main(int argc, char const *argv[])
     g->matriz_adjacente[u - 1][v - 1] = c;
   }
 
-  // Mostrando matriz de adjacência - REMOVER DO ARQUIVO FINAL
-  for (int i = 0; i < n; i++)
-  {
-    for (int j = 0; j < n; j++)
-    {
-      printf("%6.lf ", g->matriz_adjacente[i][j]);
-    }
-    printf("\n");
-  }
-
   // Criar Resposta utilizando o Algoritmo de Dijkstra
   Resposta *r = algoritmo_dijkstra(g, s, t);
   if (r == NULL)
   {
-    printf("Nao ha resposta\n");
+    printf("Nao foi possivel alocar resposta\n");
     liberar_grafo(g);
     fclose(arq);
     return -1;
@@ -293,14 +285,8 @@ int main(int argc, char const *argv[])
   // exibir um caminho de custo mínimo de s a t com base na Resposta.
   mostrar_caminho_minimo(r, s, t);
 
-  /** REMOVER DO ARQUIVO FINAL
-   * int ant[5] = {-1, 1, 2, 5, 2};
-   * double cost[5] = {0, 5, 9, 13, 7};
-   * Resposta r = {5, ant, cost};
-   * mostrar_caminho_minimo(&r, 1, 4);
-  */
-
   // Desalocar variáveis dinâmicas (Grafo, Resposta, etc...)
+  liberar_resposta(r);
   liberar_grafo(g);
   fclose(arq);
 
