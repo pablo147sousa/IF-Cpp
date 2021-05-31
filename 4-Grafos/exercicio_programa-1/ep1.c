@@ -1,11 +1,11 @@
 /** Exercício programa 1
  * Alunos:
  *  - Anilton Magalhães de Castro
- *  -
- *  -
- *  -
+ *  - Gustavo Alves de Vasconcelos
+ *  - Lucas Agostinho Fernandes
+ *  - Vitor Bryan Melo de Lima
  * 
- * Convenções de Código: (sintam-se livres para melhores sugestões)
+ * Convenções de Código:
  *  - identação com 2 espaços
  *  - snake case para nomes de variaveis e funções
  *  -
@@ -20,13 +20,13 @@
 #define FILENAME_LENGTH 20
 
 /* Grafos - INÍCIO */
-
 typedef struct grafo
 {
   int n_vertices;
   double **matriz_adjacente;
 } Grafo;
 
+// Aloca dinamicamente um grafo de matriz de adjacência
 Grafo *criar_grafo(int n_vertices)
 {
   Grafo *g = (Grafo *)malloc(sizeof(Grafo));
@@ -68,6 +68,7 @@ Grafo *criar_grafo(int n_vertices)
   return g;
 }
 
+// Realiza a desalocação das partes do grafo
 void liberar_grafo(Grafo *g)
 {
   for (int i = 0; i < g->n_vertices; i++)
@@ -77,10 +78,11 @@ void liberar_grafo(Grafo *g)
   free(g->matriz_adjacente);
   free(g);
 }
-
 /* Grafos - FIM */
-/* Solução - INÍCIO */
 
+/* Solução - INÍCIO */
+// Contém o vetor anterior e o vetor de custos
+// utilizados pelo algoritmo de dijkstra
 typedef struct resposta
 {
   int length,
@@ -88,6 +90,7 @@ typedef struct resposta
   double *custo;
 } Resposta;
 
+// Aloca dinamicamente a struct resposta
 Resposta *alocar_resposta(int len)
 {
   Resposta *r = (Resposta *)malloc(sizeof(Resposta));
@@ -115,8 +118,12 @@ Resposta *alocar_resposta(int len)
   return r;
 }
 
+// Mostra o arco que chega no vertice anterior ao do parâmetro
+// E mostra o arco que chega no vertice do parâmetro
 void mostrar_caminho_recursivo(Resposta *r, int vertice)
 {
+  // A recursão para quando chega no vertice inicial (start)
+  // na posição do vertice inicial não há anterior (r->anterior[start] == -1)
   if (r->anterior[vertice] != -1)
   {
     mostrar_caminho_recursivo(r, r->anterior[vertice]);
@@ -124,6 +131,8 @@ void mostrar_caminho_recursivo(Resposta *r, int vertice)
   }
 }
 
+// Dado uma resposta já computada pelo algoritmo de dijkstra
+// Imprime na tela com base no vetor anterior já definido
 void mostrar_caminho_minimo(Resposta *r, int start, int stop)
 {
   if (r->custo[stop - 1] == INFINITY)
@@ -135,22 +144,23 @@ void mostrar_caminho_minimo(Resposta *r, int start, int stop)
   {
     printf("Caminho minimo do vertice %d para o vertice %d:\n", start, stop);
     mostrar_caminho_recursivo(r, stop - 1);
-    printf("\nO custo para chegar no vertice %d entao e: %lf\n", stop, r->custo[stop - 1]);
+    printf("\nO custo para chegar no vertice %d entao e: %10.3lf\n", stop, r->custo[stop - 1]);
   }
 }
 
+// Desaloca dinamicamente a resposta e suas partes
 void liberar_resposta(Resposta *r)
 {
   free(r->custo);
   free(r->anterior);
   free(r);
 }
-
 /* Solução - FIM */
-/* Algoritmo de Dijkstra - INÍCIO */
 
+/* Algoritmo de Dijkstra - INÍCIO */
 Resposta *algoritmo_dijkstra(Grafo *g, int start, int stop)
 {
+  // Aloca resposta a ser computada
   Resposta *r = alocar_resposta(g->n_vertices);
   if (r == NULL)
   {
@@ -160,38 +170,33 @@ Resposta *algoritmo_dijkstra(Grafo *g, int start, int stop)
   // Inicializar resposta
   for (unsigned i = 0; i < g->n_vertices; i++)
   {
-    if (g->matriz_adjacente[start - 1][i] != -1)
-    {
-      r->anterior[i] = start - 1;
-      r->custo[i] = g->matriz_adjacente[start - 1][i];
-    }
-    else
-    {
-      r->custo[i] = INFINITY;
-      r->anterior[i] = -1;
-    }
+    r->custo[i] = INFINITY;
+    r->anterior[i] = -1;
   }
   r->custo[start - 1] = 0;
 
+  // Aloca vetor de booleanos marcando para
+  // quais vértices já se conhece o caminho mínimo
   bool *z = (bool *)calloc(g->n_vertices, sizeof(bool));
   if (z == NULL)
   {
     liberar_resposta(r);
     return NULL;
   }
-  z[start - 1] = true;
 
   // Posição do vértice inicial no grafo
   int v_aux = start - 1;
-  double custo_min_aux = 0, _temp_custo_i;
-  while (v_aux != stop - 1 && custo_min_aux != INFINITY)
+  double custo_min_aux = 0;
+
+  // Enquanto v_aux não for o vértice de destino EE o custo mínimo não for INFINITO
+  while (v_aux != stop - 1
+         && custo_min_aux != INFINITY)
   {
     custo_min_aux = INFINITY;
     for (unsigned i = 0; i < g->n_vertices; i++)
     {
       // Se o vértice não está em Z
-      // && o custo para chegar nele for o menor dentre os arcos da fronteira
-      _temp_custo_i = r->custo[i];
+      // EE o custo para chegar nele for o menor dentre os demais custos
       if (z[i] == false
           && r->custo[i] >= 0
           && r->custo[i] < custo_min_aux)
@@ -202,24 +207,32 @@ Resposta *algoritmo_dijkstra(Grafo *g, int start, int stop)
       }
     }
 
-    //Distâncias dos novos vizinhos de z//  && 
-    if (v_aux != stop - 1 && custo_min_aux != INFINITY)
+    // Se v_aux não for o vértice de destino
+    // EE o custo mínimo não for INFINITO
+    if (v_aux != stop - 1
+        && custo_min_aux != INFINITY)
     {
+      // Para cada vértice i do grafo g
       for (unsigned i = 0; i < g->n_vertices; i++)
+      {
+        // Se o vértice i não estiver em Z
+        // EE existir um arco de v_aux -> i
+        // EE (o custo de chegar a v_aux + o custo desse arco) < o custo de chegar a i
         if (z[i] == false
             && g->matriz_adjacente[v_aux][i] != -1
             && r->custo[v_aux] + g->matriz_adjacente[v_aux][i] < r->custo[i])
         {
+          // Atualiza os valores dos vétores de custo e anteriores
           r->custo[i] = r->custo[v_aux] + g->matriz_adjacente[v_aux][i];
           r->anterior[i] = v_aux;
         }
-        z[v_aux] = true;
+      }
+      z[v_aux] = true;
     }
   }
 
   return r;
 }
-
 /* Algoritmo de Dijkstra - FIM */
 
 int main(int argc, char const *argv[])
