@@ -4,7 +4,6 @@
  *  - Lucas Dantas
  *  - Pablo Moreira
  *  - Rodrigo Matos
- dadasdadasdasda
 */
 
 #include <stdio.h>
